@@ -268,14 +268,16 @@
                      :source-timezone source-timezone})))
     (let [source-timezone (or source-timezone (qp.timezone/results-timezone-id))
           expr            (cond-> expr
-                            source-timezone
+                            (and (not datetimeoffset?) source-timezone)
                             (hx/->AtTimeZone (zone-id->windows-zone source-timezone))
                             target-timezone
-                            (hx/->AtTimeZone (zone-id->windows-zone target-timezone)))]
+                            (hx/->AtTimeZone (zone-id->windows-zone target-timezone))
+                            true
+                            hx/->datetime)]
       (hx/with-convert-timezone-type-info expr
         target-timezone
         source-timezone
-        "datetimeoffset"))))
+        "datetime"))))
 
 (defmethod sql.qp/cast-temporal-string [:sqlserver :Coercion/ISO8601->DateTime]
   [_driver _semantic_type expr]

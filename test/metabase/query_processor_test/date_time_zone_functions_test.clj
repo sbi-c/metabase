@@ -453,7 +453,7 @@
                   ["2008-06-20T10:20:10Z" "2008-06-20T03:20:10-07:00" 3]] ;; During DST -- UTC-7
                  (->> (mt/run-mbql-query
                         times
-                        {:expressions {"converted" [:convert-timezone $times.dt "US/Pacific" "UTC"]
+                        {:expressions {"converted" [:convert-timezone $times.dt "America/Los_Angeles" "UTC"]
                                        "hour"      [:get-hour [:expression "converted"]]}
                          :filter      [:< $times.index 3]
                          :fields      [$times.dt
