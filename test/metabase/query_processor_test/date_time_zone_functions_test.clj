@@ -523,8 +523,8 @@
                         "2004-03-19T18:19:09Z"]]
                       (->> (mt/native-query {:query         (format "select * from {{%s}} %s" card-tag
                                                                     (case driver/*driver*
-                                                                      :postgres "as source"
-                                                                      ""))
+                                                                      :oracle ""
+                                                                      "as source"))
                                              :template-tags {card-tag {:card-id      (:id card)
                                                                        :type         :card
                                                                        :display-name "CARD ID"
