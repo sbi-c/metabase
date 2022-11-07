@@ -498,16 +498,16 @@
 
         (testing "nested query should works"
           (mt/with-temp Card [card
-                              {:dataset_query
-                               (mt/mbql-query
-                                 times
-                                 {:expressions {"to-07"       [:convert-timezone $times.dt (offset->zone "+07:00")]
-                                                "to-07-to-09" [:convert-timezone [:expression "to-07"] (offset->zone "+09:00")
-                                                               (offset->zone "+07:00")]}
-                                  :filter      [:= $times.index 1]
-                                  :fields      [$times.dt
-                                                [:expression "to-07"]
-                                                [:expression "to-07-to-09"]]})}]
+                               {:dataset_query
+                                (mt/mbql-query
+                                  times
+                                  {:expressions {"to-07"       [:convert-timezone $times.dt (offset->zone "+07:00")]
+                                                 "to-07-to-09" [:convert-timezone [:expression "to-07"] (offset->zone "+09:00")
+                                                                (offset->zone "+07:00")]}
+                                   :filter      [:= $times.index 1]
+                                   :fields      [$times.dt
+                                                 [:expression "to-07"]
+                                                 [:expression "to-07-to-09"]]})}]
             (testing "mbql query"
               (is (= [["2004-03-19T09:19:09Z"
                        "2004-03-19T16:19:09+07:00"
@@ -521,7 +521,10 @@
                (is (= [["2004-03-19T09:19:09Z"
                         "2004-03-19T16:19:09Z"
                         "2004-03-19T18:19:09Z"]]
-                      (->> (mt/native-query {:query         (format "select * from {{%s}} as source" card-tag)
+                      (->> (mt/native-query {:query         (format "select * from {{%s}} %s" card-tag
+                                                                    (case driver/*driver*
+                                                                      :postgres "as source"
+                                                                      ""))
                                              :template-tags {card-tag {:card-id      (:id card)
                                                                        :type         :card
                                                                        :display-name "CARD ID"

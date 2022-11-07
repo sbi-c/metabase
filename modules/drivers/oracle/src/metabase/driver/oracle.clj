@@ -224,11 +224,13 @@
                             (hsql-from-tz source-timezone)
 
                             target-timezone
-                            (hx/->AtTimeZone target-timezone))]
+                            (hx/->AtTimeZone target-timezone)
+                            true
+                            (hx/->timestamp))]
       (hx/with-convert-timezone-type-info expr
         target-timezone
         source-timezone
-        "timestamp with time zone"))))
+        "timestamp"))))
 
 (def ^:private now (hsql/raw "SYSDATE"))
 
