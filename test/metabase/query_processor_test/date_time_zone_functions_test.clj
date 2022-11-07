@@ -3,6 +3,7 @@
             [clojure.test :refer :all]
             [java-time :as t]
             [metabase.driver :as driver]
+            [metabase.models :refer [Card]]
             [metabase.test :as mt]
             [metabase.util.date-2 :as u.date]))
 
@@ -487,4 +488,37 @@
                          :filter      [:= [:expression "hour"] 18]
                          :fields      [[:expression "converted"]]})
                       mt/rows
-                      first))))))))
+                      first))))
+
+        (testing "nested query should works"
+          (mt/with-temp Card [card
+                              {:dataset_query
+                               (mt/mbql-query
+                                 times
+                                 {:expressions {"to-07"       [:convert-timezone $times.dt (offset->zone "+07:00")]
+                                                "to-07-to-09" [:convert-timezone [:expression "to-07"] (offset->zone "+09:00")
+                                                               (offset->zone "+07:00")]}
+                                  :filter      [:= $times.index 1]
+                                  :fields      [$times.dt
+                                                [:expression "to-07"]
+                                                [:expression "to-07-to-09"]]})}]
+            (testing "mbql query"
+              (is (= [["2004-03-19T09:19:09Z"
+                       "2004-03-19T16:19:09+07:00"
+                       "2004-03-19T18:19:09+09:00"]]
+                     (->> (mt/mbql-query nil {:source-table (format "card__%d" (:id card))})
+                          mt/process-query
+                          mt/rows))))
+
+            (testing "native query"
+              (let [card-tag (format "#%d" (:id card))]
+               (is (= [["2004-03-19T09:19:09Z"
+                        "2004-03-19T16:19:09Z"
+                        "2004-03-19T18:19:09Z"]]
+                      (->> (mt/native-query {:query         (format "select * from {{%s}} as source" card-tag)
+                                             :template-tags {card-tag {:card-id      (:id card)
+                                                                       :type         :card
+                                                                       :display-name "CARD ID"
+                                                                       :id           "_CARD_ID_"}}})
+                           mt/process-query
+                           mt/rows)))))))))))
