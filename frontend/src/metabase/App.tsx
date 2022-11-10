@@ -29,7 +29,12 @@ import { ContentViewportContext } from "metabase/core/context/ContentViewportCon
 
 import { AppErrorDescriptor, State } from "metabase-types/store";
 
-import { AppContainer, AppContent, AppContentContainer } from "./App.styled";
+import {
+  AppContainer,
+  AppContent,
+  AppContentContainer,
+  SourceCodeLink,
+} from "./App.styled";
 
 const getErrorComponent = ({ status, data, context }: AppErrorDescriptor) => {
   if (status === 403 || data?.error_code === "unauthorized") {
@@ -122,6 +127,10 @@ function App({
             <UndoListing />
             <StatusListing />
           </AppContentContainer>
+          <SourceCodeLink>
+            powered by Metabase (
+            <a href="https://www.preiseule.com/">Quellcode</a>)
+          </SourceCodeLink>
         </AppContainer>
       </ScrollToTop>
     </ErrorBoundary>

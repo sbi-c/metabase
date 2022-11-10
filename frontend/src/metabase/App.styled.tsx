@@ -32,3 +32,10 @@ export const AppContent = styled.main`
     overflow: visible !important;
   }
 `;
+
+export const SourceCodeLink = styled.div`
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  text-align: right;
+`;
