@@ -27,6 +27,9 @@
             [metabase.models.query.permissions :as query-perms]
             [metabase.models.revision.last-edit :as last-edit]
             [metabase.models.timeline :as timeline]
+            [metabase.pulse :as pulse-impl]
+            [metabase.pulse.render :as render]
+            [metabase.query-processor :as qp]
             [metabase.query-processor.async :as qp.async]
             [metabase.query-processor.card :as qp.card]
             [metabase.query-processor.pivot :as qp.pivot]
@@ -38,6 +41,7 @@
             [metabase.util.date-2 :as u.date]
             [metabase.util.i18n :refer [trs tru]]
             [metabase.util.schema :as su]
+            [ring.util.response :as response]
             [schema.core :as s]
             [toucan.db :as db]
             [toucan.hydrate :refer [hydrate]])
@@ -783,6 +787,34 @@ saved later when it is ready."
    :dashboard-id dashboard_id
    :context      (if collection_preview :collection :question)
    :middleware   {:process-viz-settings? false}))
+
+;; HERE
+
+(defn image-response
+  "Returns a Ring response to serve a static-viz image download."
+  [byte-array]
+  (-> (response/response byte-array)
+      (#'response/content-length (count byte-array))))
+
+(api/defendpoint POST "/:card-id/download-image"
+  "WIP"
+  [card-id]
+  (let [{:keys [dataset_query] :as card} (db/select-one Card :id card-id)
+        query-results                    (qp/process-query-and-save-execution!
+                                          (-> dataset_query
+                                              (assoc :async? false)
+                                              (assoc-in [:middleware :process-viz-settings?] true))
+                                          {:executed-by api/*current-user-id*
+                                           :context     :pulse
+                                           :card-id     card-id})
+        query-results (qp.card/run-query-for-card-async )
+        png-bytes                        (render/render-pulse-card-to-png (pulse-impl/defaulted-timezone card)
+                                                                          card
+                                                                          query-results
+                                                                          1000)]
+    (-> png-bytes
+        image-response
+        (response/header "Content-Disposition" (format "attachment; filename=\"card-%d.png\"" card-id)))))
 
 (api/defendpoint ^:streaming POST "/:card-id/query/:export-format"
   "Run the query associated with a Card, and return its results as a file in the specified format.
