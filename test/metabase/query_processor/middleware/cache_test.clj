@@ -409,26 +409,27 @@
                   "CSV results should match results when caching isn't in play"))))))))
 
 (deftest caching-across-different-formats-test
-  (testing "If we run a query with a download format such as CSV we should be able to use cached results elsewhere"
-    (let [query          (mt/mbql-query venues {:order-by [[:asc $id]], :limit 7})
-          normal-results (qp/process-query query)]
-      (is (= false
-             (boolean (:cached normal-results)))
-          "Query shouldn't be cached when running without mock cache in place")
-      (with-mock-cache [save-chan]
-        (let [query (assoc query :cache-ttl 100)]
-          (with-open [os (java.io.ByteArrayOutputStream.)]
-            (is (= false
-                   (boolean (:cached (qp/process-query query (qp.streaming/streaming-context :csv os)))))
-                "Query shouldn't be cached after first run with the mock cache in place")
-            (mt/wait-for-result save-chan))
-          (is (= (-> (assoc normal-results :cached true)
-                     (dissoc :updated_at)
-                     (m/dissoc-in [:data :results_metadata :checksum]))
-                 (-> (qp/process-query query)
-                     (dissoc :updated_at)
-                     (m/dissoc-in [:data :results_metadata :checksum])))
-              "Query should be cached and results should match those ran without cache"))))))
+  (mt/test-drivers (mt/normal-drivers)
+    (testing "If we run a query with a download format such as CSV we should be able to use cached results elsewhere"
+      (let [query          (mt/mbql-query venues {:order-by [[:asc $id]], :limit 7})
+            normal-results (qp/process-query query)]
+        (is (= false
+               (boolean (:cached normal-results)))
+            "Query shouldn't be cached when running without mock cache in place")
+        (with-mock-cache [save-chan]
+          (let [query (assoc query :cache-ttl 100)]
+            (with-open [os (java.io.ByteArrayOutputStream.)]
+              (is (= false
+                     (boolean (:cached (qp/process-query query (qp.streaming/streaming-context :csv os)))))
+                  "Query shouldn't be cached after first run with the mock cache in place")
+              (mt/wait-for-result save-chan))
+            (is (= (-> (assoc normal-results :cached true)
+                       (dissoc :updated_at)
+                       (m/dissoc-in [:data :results_metadata :checksum]))
+                   (-> (qp/process-query query)
+                       (dissoc :updated_at)
+                       (m/dissoc-in [:data :results_metadata :checksum])))
+                "Query should be cached and results should match those ran without cache")))))))
 
 (deftest caching-big-resultsets
   (testing "Make sure we can save large result sets without tripping over internal async buffers"
