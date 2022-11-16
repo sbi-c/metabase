@@ -762,6 +762,7 @@ const helperTextStrings: HelpText[] = [
   },
   {
     name: "now",
+<<<<<<< HEAD
     structure: "now",
     description: t`Returns the current timestamp.`,
     example: "now",
@@ -796,6 +797,13 @@ See the full list here: https://w.wiki/4Jx`,
         description: t`The current time zone. Only required for timestamps with no time zone.`,
       },
     ],
+  },
+  {
+    name: "now",
+    structure: "now()",
+    description: t`Returns the current timestamp.`,
+    example: "now()",
+    args: [],
   },
 ];
 
