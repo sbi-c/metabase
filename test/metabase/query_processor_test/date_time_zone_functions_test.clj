@@ -412,6 +412,7 @@
                  mt/rows
                  ffirst
                  u.date/parse
+                 (t/zoned-date-time (t/zone-id "UTC")) ; needed for sqlite, which returns a local date time
                  (close? (t/instant) (t/seconds 30))))))
     (testing "should return a datetime with second precision"
       (is (= true
