@@ -406,13 +406,13 @@
     (testing "should work as an argument to other functions"
       (is (= [1 1]
              (-> (mt/run-mbql-query venues
-                   {:expressions {"1" [:datetime-diff [:now] [:datetime-add [:now] 1 :month] :month]
-                                  "2" [:now]
-                                  "3" [:datetime-diff [:expression "2"] [:datetime-add [:expression "2"] 1 :month] :month]}
-                    :fields [[:expression "1"]
-                             [:expression "3"]]
+                   {:expressions {"1" [:now]}
+                    :fields [[:expression "1"]]
                     :limit  1})
-                 mt/rows first))))
+                 mt/rows
+                 ffirst
+                 u.date/parse
+                 (close? (t/instant) (t/seconds 30))))))
     (testing "should return a datetime with second precision"
       (is (= true
              (-> (mt/run-mbql-query venues
@@ -420,7 +420,7 @@
                     :fields [[:expression "1"]]
                     :limit  1})
                  mt/rows ffirst u.date/parse second-precision?))))
-    (testing "should return a DateTime type"
+    (testing "should return a :type/DateTime typed column"
       (let [col (-> (mt/run-mbql-query venues
                       {:expressions {"1" [:now]}
                        :fields [[:expression "1"]]
