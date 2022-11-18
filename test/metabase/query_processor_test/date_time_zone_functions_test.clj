@@ -3,13 +3,10 @@
             [clojure.test :refer :all]
             [java-time :as t]
             [metabase.driver :as driver]
-<<<<<<< HEAD
             [metabase.models :refer [Card]]
-=======
             [metabase.driver.sql.query-processor :as sql.qp]
             [metabase.util.honeysql-extensions :as hx]
             [honeysql.core :as hsql]
->>>>>>> c15eb1ceb8 (Remove type test)
             [metabase.test :as mt]
             [metabase.util.date-2 :as u.date]))
 
