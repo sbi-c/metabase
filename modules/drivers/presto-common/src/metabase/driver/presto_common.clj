@@ -167,9 +167,15 @@
             (hh/where [:> :__rownum__ offset])
             (hh/limit items))))))
 
+<<<<<<< HEAD
 (defmethod sql.qp/current-datetime-honeysql-form :presto-common
   [_]
   (hx/with-database-type-info :%now "timestamp with time zone"))
+=======
+(defmethod sql.qp/->honeysql [:presto-common :now]
+  [_driver _clause]
+  (hsql/call :date_trunc (hx/literal :second) (hsql/call :now)))
+>>>>>>> 8a08b3afd1 (Add presto implementation)
 
 (defmethod sql.qp/date [:presto-common :default]         [_ _ expr] expr)
 (defmethod sql.qp/date [:presto-common :minute]          [_ _ expr] (hsql/call :date_trunc (hx/literal :minute) expr))
