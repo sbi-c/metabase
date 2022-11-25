@@ -1,5 +1,22 @@
 import { t } from "ttag";
+import moment from "moment-timezone";
+import MetabaseSettings from "metabase/lib/settings";
+
 import { HelpText } from "./types";
+
+const timezoneShort = MetabaseSettings.reportTimezoneShort();
+
+const now = new Date();
+
+// const nowMoment = moment();
+// console.log("🚀", nowMoment.zoneAbbr("PT").format("ha z"));
+
+// const nowAtServerTimezone = new Date(
+//   now.toLocaleString("en-US", {
+//     timeZoneName: "short",
+//     timeZone: "PT",
+//   }),
+// );
 
 const helperTextStrings: HelpText[] = [
   {
@@ -763,7 +780,7 @@ const helperTextStrings: HelpText[] = [
   {
     name: "now",
     structure: "now",
-    description: t`Returns the current timestamp.`,
+    description: t`Returns the current timestamp. Server timezone is ${timezoneShort}. Your time: ${now}. Time at server: ${"nowAtServerTimezone"}`,
     example: "now",
     args: [],
   },
