@@ -1,8 +1,7 @@
 import { t } from "ttag";
 import moment from "moment-timezone";
 import MetabaseSettings from "metabase/lib/settings";
-
-import { HelpText } from "./types";
+import { HelpText } from "metabase-lib/expressions/types";
 
 const serverTimezone = MetabaseSettings.get("report-timezone-long");
 const userTimezone = Intl.DateTimeFormat?.().resolvedOptions?.().timeZone;
