@@ -1,17 +1,18 @@
 import { t } from "ttag";
 import moment from "moment-timezone";
 import MetabaseSettings from "metabase/lib/settings";
+import { formatTime } from "metabase/lib/formatting";
 import { HelpText } from "metabase-lib/expressions/types";
 
-const serverTimezone = MetabaseSettings.get("report-timezone-long");
-const userTimezone = Intl.DateTimeFormat?.().resolvedOptions?.().timeZone;
-
 const applicationName = MetabaseSettings.get("application-name");
-const now = new Date().toLocaleString("en-US");
+const serverTimezone = MetabaseSettings.get("report-timezone-long");
 
-const nowAtServerTimezone = new Date().toLocaleString("en-US", {
-  timeZone: serverTimezone,
-});
+const userTimezone = Intl.DateTimeFormat?.().resolvedOptions?.().timeZone;
+const now = moment().format("LT");
+
+const nowAtServerTimezone = serverTimezone
+  ? moment().tz(serverTimezone).format("LT")
+  : moment().format("LT");
 
 const helperTextStrings: HelpText[] = [
   {
