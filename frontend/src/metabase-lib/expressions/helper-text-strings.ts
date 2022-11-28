@@ -5,7 +5,9 @@ import MetabaseSettings from "metabase/lib/settings";
 import { HelpText } from "./types";
 
 const serverTimezone = MetabaseSettings.get("report-timezone-long");
+const userTimezone = Intl.DateTimeFormat?.().resolvedOptions?.().timeZone;
 
+const applicationName = MetabaseSettings.get("application-name");
 const now = new Date().toLocaleString("en-US");
 
 const nowAtServerTimezone = new Date().toLocaleString("en-US", {
@@ -774,7 +776,7 @@ const helperTextStrings: HelpText[] = [
   {
     name: "now",
     structure: "now",
-    description: t`Returns the current timestamp. Server timezone is ${serverTimezone}. Your time: ${now}. Time at server: ${nowAtServerTimezone}`,
+    description: t`Returns the current timestamp in the ${applicationName} timezone.<br/>Your local time is: ${now} in ${userTimezone}.<br/>The ${applicationName} instance time is: ${nowAtServerTimezone} in ${serverTimezone}.`,
     example: "now",
     args: [],
   },
