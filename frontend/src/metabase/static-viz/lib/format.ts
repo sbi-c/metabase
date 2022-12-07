@@ -1,5 +1,6 @@
 import moment from "moment";
 import { Moment } from "moment-timezone";
+import { NumberLike, StringLike } from "@visx/scale";
 import {
   DatasetColumn,
   RowValue,
@@ -19,6 +20,7 @@ import {
 import { ChartColumns } from "metabase/visualizations/lib/graph/columns";
 import { getStackOffset } from "metabase/visualizations/lib/settings/stacking";
 import { getLabelsMetricColumn } from "metabase/visualizations/shared/utils/series";
+import { RemappingHydratedDatasetColumn } from "metabase/visualizations/shared/types/data";
 import {
   isCoordinate,
   isDate,
@@ -28,6 +30,17 @@ import {
 } from "metabase-lib/types/utils/isa";
 import { rangeForValue } from "metabase-lib/queries/utils/range-for-value";
 import { getColumnKey } from "metabase-lib/queries/utils/get-column-key";
+
+const getRemappedValue = (
+  value: unknown,
+  column: RemappingHydratedDatasetColumn,
+) => {
+  if (column.remapping instanceof Map && column.remapping.has(value)) {
+    return column.remapping.get(value);
+  }
+
+  return value;
+};
 
 type StaticFormattingOptions = {
   column: DatasetColumn;
@@ -105,12 +118,13 @@ export const getStaticFormatters = (
   chartColumns: ChartColumns,
   settings: VisualizationSettings,
 ): ChartTicksFormatters => {
-  const yTickFormatter = (value: RowValue) => {
+  const yTickFormatter = (value: StringLike) => {
     const column = chartColumns.dimension.column;
     const columnSettings = settings.column_settings?.[getColumnKey(column)];
+    const valueToFormat = getRemappedValue(value, column);
 
     return String(
-      formatStaticValue(value, {
+      formatStaticValue(valueToFormat, {
         column,
         ...columnSettings,
         jsx: false,
@@ -120,7 +134,7 @@ export const getStaticFormatters = (
 
   const metricColumn = getLabelsMetricColumn(chartColumns);
 
-  const percentXTicksFormatter = (percent: any) => {
+  const percentXTicksFormatter = (percent: NumberLike) => {
     const column = metricColumn.column;
     const number_separators =
       settings.column_settings?.[getColumnKey(column)]?.number_separators;
@@ -136,12 +150,13 @@ export const getStaticFormatters = (
     );
   };
 
-  const xTickFormatter = (value: any) => {
+  const xTickFormatter = (value: NumberLike) => {
     const column = metricColumn.column;
     const columnSettings = settings.column_settings?.[getColumnKey(column)];
+    const valueToFormat = getRemappedValue(value, column);
 
     return String(
-      formatStaticValue(value, {
+      formatStaticValue(valueToFormat, {
         column,
         ...columnSettings,
         jsx: false,
@@ -180,6 +195,8 @@ export const getLabelsStaticFormatter = (
 };
 
 export const getColumnValueStaticFormatter = () => {
-  return (value: any, column: DatasetColumn) =>
-    String(formatStaticValue(value, { column }));
+  return (value: RowValue, column: DatasetColumn) => {
+    const valueToFormat = getRemappedValue(value, column);
+    return String(formatStaticValue(valueToFormat, { column }));
+  };
 };
