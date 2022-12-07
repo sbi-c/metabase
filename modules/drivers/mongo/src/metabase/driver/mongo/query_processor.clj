@@ -518,6 +518,53 @@
                                                                                    :unit      unit
                                                                                    :amount    amount}}))
 
+(defmethod ->rvalue :datetime-diff [[_ x y unit]]
+  (do
+    (check-date-operations-supported)
+    (let [x (->rvalue x)
+          y (->rvalue y)]
+    (case unit
+      :year
+      {$divide [(->rvalue [:datetime-diff x y :month]) 12]}
+
+      :quarter
+      {$divide [(->rvalue [:datetime-diff x y :month]) 3]}
+
+      :week
+      {$divide [(->rvalue [:datetime-diff x y :day]) 7]}
+
+      :month
+      {$cond {:if {$lte [x y]}
+              :then {$subtract
+                     [{"$dateDiff" {:startDate x
+                                    :endDate   y
+                                    :unit      "month"}}
+                      {$cond {:if {$gt [{$dayOfMonth x}
+                                        {$dayOfMonth y}]}
+                              :then 1
+                              :else 0}}]}
+              :else {$subtract
+                     [{$cond {:if {$gt [{$dayOfMonth y}
+                                        {$dayOfMonth x}]}
+                              :then 1
+                              :else 0}}
+                      {"$dateDiff" {:startDate y
+                                    :endDate   x
+                                    :unit      "month"}}]}}}
+
+      (:day :minute :second)
+      {"$dateDiff" {:startDate x
+                    :endDate   y
+                    :unit      unit}}
+
+      :hour
+      ;; mongo's dateDiff with hour isn't accurate to the millisecond
+      {$divide [{"$dateDiff" {:startDate x
+                              :endDate   y
+                              :unit      "millisecond"}}
+                3600000]}))))
+
+
 ;;; +----------------------------------------------------------------------------------------------------------------+
 ;;; |                                               CLAUSE APPLICATION                                               |
 ;;; +----------------------------------------------------------------------------------------------------------------+
