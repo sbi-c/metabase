@@ -788,8 +788,6 @@ saved later when it is ready."
    :context      (if collection_preview :collection :question)
    :middleware   {:process-viz-settings? false}))
 
-;; HERE
-
 (defn image-response
   "Returns a Ring response to serve a static-viz image download."
   [byte-array]
