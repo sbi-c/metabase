@@ -6,6 +6,7 @@
             [metabase.models :refer [Card]]
             [metabase.query-processor.timezone :as qp.timezone]
             [metabase.test :as mt]
+            [metabase.test.data.interface :as tx]
             [metabase.util.date-2 :as u.date]))
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
@@ -945,9 +946,7 @@
                       first))))))))
 
 (deftest datetime-diff-type-test
-  ;; FIXME — The excluded drivers below don't have TIME types. These shouldn't be hard-coded with #26807
-  (mt/test-drivers (disj (mt/normal-drivers-with-feature :datetime-diff)
-                         :oracle :presto :redshift :sparksql :snowflake)
+  (mt/test-drivers (filter tx/supports-time-type? (mt/normal-drivers))
     (testing "Cannot datetime-diff against time column"
       (mt/dataset attempted-murders
         (is (thrown-with-msg?
