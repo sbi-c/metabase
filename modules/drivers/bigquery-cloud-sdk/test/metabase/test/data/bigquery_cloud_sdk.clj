@@ -46,7 +46,7 @@
 (defn- normalize-name ^String [db-or-table identifier]
   (let [s (str/replace (name identifier) "-" "_")]
     (case db-or-table
-      :db    (cond-> (str "v3_" s)
+      :db    (cond-> (str "v4_" s)
                ;; for transient datasets (i.e. those that are created and torn down with each test run), we should add
                ;; some unique name portion to prevent independent parallel test runs from interfering with each other
                (transient-dataset? s)

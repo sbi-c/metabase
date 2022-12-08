@@ -32,9 +32,9 @@
   "Prepend `database-name` with a version number so we can create new versions without breaking existing tests."
   [database-name]
   ;; try not to qualify the database name twice!
-  (if (str/starts-with? database-name "v3_")
+  (if (str/starts-with? database-name "v4_")
     database-name
-    (str "v3_" database-name)))
+    (str "v4_" database-name)))
 
 (defmethod tx/dbdef->connection-details :snowflake
   [_ context {:keys [database-name]}]
