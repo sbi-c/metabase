@@ -2,6 +2,7 @@
   "Abstract common driver for Presto. It only defines SQL generation logic and doesn't involve the transport/execution
   mechanism for actually connecting to Presto."
   (:require [buddy.core.codecs :as codecs]
+            [clojure.string :as str]
             [honeysql.core :as hsql]
             [honeysql.format :as hformat]
             [honeysql.helpers :as hh]
@@ -12,9 +13,11 @@
             [metabase.driver.sql.query-processor :as sql.qp]
             [metabase.driver.sql.util :as sql.u]
             [metabase.driver.sql.util.unprepare :as unprepare]
+            [metabase.query-processor.error-type :as qp.error-type]
             [metabase.util :as u]
             [metabase.util.date-2 :as u.date]
-            [metabase.util.honeysql-extensions :as hx])
+            [metabase.util.honeysql-extensions :as hx]
+            [metabase.util.i18n :refer [tru]])
   (:import java.sql.Time
            [java.time OffsetDateTime ZonedDateTime]))
 
@@ -171,6 +174,9 @@
   [_]
   (hx/with-database-type-info :%now "timestamp with time zone"))
 
+(defn- datediff [unit a b] (hsql/call :datediff (hx/literal unit) a b))
+(defn- extract [unit expr] (hsql/call :extract (hx/literal unit) expr))
+
 (defmethod sql.qp/date [:presto-common :default]         [_ _ expr] expr)
 (defmethod sql.qp/date [:presto-common :minute]          [_ _ expr] (hsql/call :date_trunc (hx/literal :minute) expr))
 (defmethod sql.qp/date [:presto-common :minute-of-hour]  [_ _ expr] (hsql/call :minute expr))
@@ -198,6 +204,34 @@
   [_ _ expr]
   (hsql/call :from_unixtime expr))
 
+(defn- date-diff [unit a b] (hsql/call :date_diff (hx/literal unit) a b))
+(defn- date-trunc [unit x] (hsql/call :date_trunc (hx/literal unit) x))
+
+(defmethod sql.qp/->honeysql [:presto-common :datetime-diff]
+  [driver [_ x y unit]]
+  (let [x (sql.qp/->honeysql driver x)
+        y (sql.qp/->honeysql driver y)
+        disallowed-types (keep
+                          (fn [v]
+                            (some-> v
+                                    hx/type-info
+                                    hx/type-info->db-type
+                                    name
+                                    str/lower-case
+                                    ((some-fn #(re-find #"(?i)^time$" %)
+                                              #(re-find #"(?i)^time with time zone$" %)))))
+                          [x y])]
+    (when (seq disallowed-types)
+      (throw (ex-info (tru "Only datetime, timestamp, or date types allowed. Found {0}"
+                           (pr-str disallowed-types))
+                      {:found disallowed-types
+                       :type  qp.error-type/invalid-query})))
+    (case unit
+      (:year :quarter :month :week :day)
+      (date-diff unit (date-trunc :day x) (date-trunc :day y))
+      (:hour :minute :second)
+      (date-diff unit x y))))
+
 (defmethod driver.common/current-db-time-date-formatters :presto-common
   [_]
   (driver.common/create-db-time-formatters "yyyy-MM-dd'T'HH:mm:ss.SSSZ"))
@@ -211,6 +245,7 @@
   (apply driver.common/current-db-time args))
 
 (doseq [[feature supported?] {:set-timezone                    true
+                              :datetime-diff                   true
                               :basic-aggregations              true
                               :standard-deviation-aggregations true
                               :expressions                     true
