@@ -176,12 +176,18 @@
                                                              first))
        (:nested-fields field-info) (assoc :nested-fields nested-fields)) idx-next]))
 
+(defmethod driver/dbms-version :mongo
+  [_ database]
+  (with-mongo-connection [^com.mongodb.DB conn database]
+    (let [build-info (mg/command conn {:buildInfo 1})]
+      {:version (get build-info "version")
+       :semantic-version (get build-info "versionArray")})))
+
 (defmethod driver/describe-database :mongo
   [_ database]
   (with-mongo-connection [^com.mongodb.DB conn database]
     {:tables  (set (for [collection (disj (mdb/get-collection-names conn) "system.indexes")]
-                    {:schema nil, :name collection}))
-     :version (get (mg/command conn {:buildInfo 1}) "version")}))
+                    {:schema nil, :name collection}))}))
 
 (defn- table-sample-column-info
   "Sample the rows (i.e., documents) in `table` and return a map of information about the column keys we found in that
@@ -218,27 +224,36 @@
 
 (doseq [feature [:basic-aggregations
                  :nested-fields
-                 :native-parameters]]
-  (defmethod driver/supports? [:mongo feature] [_ _] true))
+                 :native-parameters
+                 :standard-deviation-aggregations]]
+  (defmethod driver/supports? [:mongo feature] [_driver _feature] true))
 
 (defn- db-version [db]
   (get-in db [:details :version]))
 
 (defn- parse-version [version]
-  (->> (str/split version #"\.")
-       (take 2)
-       (map #(Integer/parseInt %))))
+  (let [[major minor] (str/split version #"\.")]
+    [major minor]))
 
-(defn- db-major-version [db]
-  (some-> (db-version db) parse-version first))
+(defn version-gte
+  "Returns true if x is greater than or equal to y according to semantic versioning.
+   x and y are version strings of the form \"major.minor.patch\" where minor and patch are optional.
+   Compares major and minor versions only, not patch versions.
+   (version-gte \"4.0.1\" \"4\") => true
+   (version-gte \"4\" \"4.0.1\") => true
+   (version-gte \"4.0\" \"4.0.1\") => true
+   (version-gte \"3.9\" \"4.0.0\") => false
+   (version-gte \"3.9\" \"4\") => false"
+  [x y]
+  (nat-int? (compare (parse-version x) (parse-version y))))
 
-(defmethod driver/database-supports? [:mongo :expressions] [_ _ db]
-  (let [version (db-major-version db)]
-    (and (some? version) (>= version 4))))
+(defmethod driver/database-supports? [:mongo :expressions]
+  [_ _ db]
+  (boolean (some-> (db-version db) (version-gte "4.0"))))
 
-(defmethod driver/database-supports? [:mongo :date-arithmetics] [_ _ db]
-  (let [version (db-major-version db)]
-    (and (some? version) (>= version 5))))
+(defmethod driver/database-supports? [:mongo :date-arithmetics]
+  [_ _ db]
+  (boolean (some-> (db-version db) (version-gte "5.0"))))
 
 (defmethod driver/database-supports? [:mongo :datetime-diff] [_ _ db]
   (let [version (db-major-version db)]
@@ -247,8 +262,7 @@
 (defmethod driver/database-supports? [:mongo :now]
   ;; The $$NOW aggregation expression was introduced in version 4.2.
   [_ _ db]
-  (let [version (some-> (db-version db) parse-version)]
-    (and (some? version) (>= (first version) 4) (>= (second version) 2))))
+  (boolean (some-> (db-version db) (version-gte "4.2"))))
 
 (defmethod driver/mbql->native :mongo
   [_ query]
