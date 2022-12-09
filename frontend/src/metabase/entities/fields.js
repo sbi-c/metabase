@@ -1,6 +1,6 @@
 import { t } from "ttag";
 import { normalize } from "normalizr";
-import { assocIn, updateIn } from "icepick";
+import { assocIn, getIn, updateIn } from "icepick";
 import { createEntity, notify } from "metabase/lib/entities";
 import {
   compose,
@@ -191,6 +191,14 @@ const Fields = createEntity({
         updateIn(state, [fieldId, "remappings"], (existing = []) =>
           Array.from(new Map(existing.concat(remappings))),
         ),
+      // Can't import metabase/dashboard/FETCH_CARD_DATA because of circular dependency
+      ["metabase/dashboard/FETCH_CARD_DATA"]: (state, { payload }) => {
+        const fields = getIn(payload, ["result", "data", "cols"]);
+        return {
+          ...Fields.normalizeList(fields).entities[Fields.name],
+          ...state,
+        };
+      },
     },
     {},
   ),
