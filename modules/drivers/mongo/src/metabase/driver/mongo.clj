@@ -256,8 +256,8 @@
   (boolean (some-> (db-version db) (version-gte "5.0"))))
 
 (defmethod driver/database-supports? [:mongo :datetime-diff] [_ _ db]
-  (let [version (db-major-version db)]
-    (and (some? version) (>= version 5))))
+  [_ _ db]
+  (boolean (some-> (db-version db) (version-gte "5.0"))))
 
 (defmethod driver/database-supports? [:mongo :now]
   ;; The $$NOW aggregation expression was introduced in version 4.2.
