@@ -589,26 +589,6 @@ workflows:
             MB_MONGO_TEST_PASSWORD=metasample123
 
       - test-driver:
-          name: be-tests-oracle-ee
-          requires:
-            - be-deps
-          before-steps:
-            - fetch-jdbc-driver:
-                source: ORACLE_JDBC_JAR
-                dest: ojdbc8.jar
-            - run:
-                name: Ensure truststore file
-                command: ls /home/circleci/metabase/metabase/resources/certificates/rds_root_ca_truststore.jks
-          driver: oracle
-          extra-env: >-
-            MB_ORACLE_SSL_TEST_SSL=true
-            MB_ORACLE_SSL_TEST_PORT=2484
-            MB_ORACLE_SSL_TEST_SSL_USE_TRUSTSTORE=true
-            MB_ORACLE_SSL_TEST_SSL_TRUSTSTORE_PATH=/home/circleci/metabase/metabase/resources/certificates/rds_root_ca_truststore.jks
-            MB_ORACLE_SSL_TEST_SSL_TRUSTSTORE_OPTIONS=local
-            MB_ORACLE_SSL_TEST_SSL_TRUSTSTORE_PASSWORD_VALUE=metabase
-
-      - test-driver:
           name: be-tests-presto-jdbc-ee
           requires:
             - be-deps
