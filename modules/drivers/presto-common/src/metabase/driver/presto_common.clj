@@ -178,11 +178,11 @@
 (defn- date-trunc [unit x] (hsql/call :date_trunc (hx/literal unit) x))
 
 (defmethod sql.qp/date [:presto-common :default]         [_ _ expr] expr)
-(defmethod sql.qp/date [:presto-common :minute]          [_ _ expr] (date-trunc :minute expr)
+(defmethod sql.qp/date [:presto-common :minute]          [_ _ expr] (date-trunc :minute expr))
 (defmethod sql.qp/date [:presto-common :minute-of-hour]  [_ _ expr] (hsql/call :minute expr))
-(defmethod sql.qp/date [:presto-common :hour]            [_ _ expr] (date-trunc :hour expr)
+(defmethod sql.qp/date [:presto-common :hour]            [_ _ expr] (date-trunc :hour expr))
 (defmethod sql.qp/date [:presto-common :hour-of-day]     [_ _ expr] (hsql/call :hour expr))
-(defmethod sql.qp/date [:presto-common :day]             [_ _ expr] (date-trunc :day expr)
+(defmethod sql.qp/date [:presto-common :day]             [_ _ expr] (date-trunc :day expr))
 (defmethod sql.qp/date [:presto-common :day-of-month]    [_ _ expr] (hsql/call :day expr))
 (defmethod sql.qp/date [:presto-common :day-of-year]     [_ _ expr] (hsql/call :day_of_year expr))
 
@@ -194,11 +194,11 @@
   [driver _ expr]
   (sql.qp/adjust-start-of-week driver (partial date-trunc :week) expr))
 
-(defmethod sql.qp/date [:presto-common :month]           [_ _ expr] (date-trunc :month expr)
+(defmethod sql.qp/date [:presto-common :month]           [_ _ expr] (date-trunc :month expr))
 (defmethod sql.qp/date [:presto-common :month-of-year]   [_ _ expr] (hsql/call :month expr))
-(defmethod sql.qp/date [:presto-common :quarter]         [_ _ expr] (date-trunc :quarter expr)
+(defmethod sql.qp/date [:presto-common :quarter]         [_ _ expr] (date-trunc :quarter expr))
 (defmethod sql.qp/date [:presto-common :quarter-of-year] [_ _ expr] (hsql/call :quarter expr))
-(defmethod sql.qp/date [:presto-common :year]            [_ _ expr] (date-trunc :year expr)
+(defmethod sql.qp/date [:presto-common :year]            [_ _ expr] (date-trunc :year expr))
 
 (defmethod sql.qp/unix-timestamp->honeysql [:presto-common :seconds]
   [_ _ expr]
