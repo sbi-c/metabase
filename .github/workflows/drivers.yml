@@ -252,6 +252,52 @@ jobs:
       with:
         junit-name: 'be-tests-mysql-latest-ee'
 
+  be-tests-oracle-18-4-ee:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-20.04
+    timeout-minutes: 60
+    env:
+      CI: 'true'
+      DRIVERS: oracle
+      MB_ORACLE_TEST_HOST: localhost
+      MB_ORACLE_TEST_USER: system
+      MB_ORACLE_TEST_PASSWORD: password
+      MB_ORACLE_TEST_SERVICE_NAME: XEPDB1
+    services:
+      oracle:
+        image: gvenzl/oracle-xe:18.4.0-slim
+        ports:
+          - "1521:1521"
+    steps:
+    - uses: actions/checkout@v3
+    - name: Test Oracle driver (18.4)
+      uses: ./.github/actions/test-driver
+      with:
+        junit-name: 'be-tests-oracle-18-4-ee'
+
+  be-tests-oracle-21-3-ee:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-20.04
+    timeout-minutes: 60
+    env:
+      CI: 'true'
+      DRIVERS: oracle
+      MB_ORACLE_TEST_HOST: localhost
+      MB_ORACLE_TEST_USER: system
+      MB_ORACLE_TEST_PASSWORD: password
+      MB_ORACLE_TEST_SERVICE_NAME: XEPDB1
+    services:
+      oracle:
+        image: gvenzl/oracle-xe:21.3.0-slim
+        ports:
+          - "1521:1521"
+    steps:
+    - uses: actions/checkout@v3
+    - name: Test Oracle driver (21.3)
+      uses: ./.github/actions/test-driver
+      with:
+        junit-name: 'be-tests-oracle-21-3-ee'
+
   be-tests-postgres-ee:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-20.04
