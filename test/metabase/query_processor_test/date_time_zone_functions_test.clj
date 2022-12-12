@@ -940,15 +940,13 @@
                       first))))))))
 
 (deftest datetime-diff-type-test
-  (mt/test-drivers (->> (disj (mt/normal-drivers-with-feature :datetime-diff) :snowflake)
-                        (filter mt/supports-time-type?))
+  (mt/test-drivers (filter mt/supports-time-type? (mt/normal-drivers-with-feature :datetime-diff))
     (testing "Cannot datetime-diff against time column"
-      (mt/dataset attempted-murders
+      (mt/dataset test-data-with-time
         (is (thrown-with-msg?
              clojure.lang.ExceptionInfo
              #"Only datetime, timestamp, or date types allowed. Found .*"
-             (mt/rows
-              (mt/run-mbql-query attempts
-                {:limit 1
-                 :fields      [[:expression "diff-day"]]
-                 :expressions {"diff-day" [:datetime-diff $time_tz $datetime_tz :day]}}))))))))
+             (mt/run-mbql-query users
+               {:limit 1
+                :fields      [[:expression "diff-day"]]
+                :expressions {"diff-day" [:datetime-diff $last_login_time $last_login_date :day]}})))))))
