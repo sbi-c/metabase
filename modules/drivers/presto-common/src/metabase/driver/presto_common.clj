@@ -174,15 +174,15 @@
   [_]
   (hx/with-database-type-info :%now "timestamp with time zone"))
 
-(defn- datediff [unit a b] (hsql/call :datediff (hx/literal unit) a b))
-(defn- extract [unit expr] (hsql/call :extract (hx/literal unit) expr))
+(defn- date-diff [unit a b] (hsql/call :date_diff (hx/literal unit) a b))
+(defn- date-trunc [unit x] (hsql/call :date_trunc (hx/literal unit) x))
 
 (defmethod sql.qp/date [:presto-common :default]         [_ _ expr] expr)
-(defmethod sql.qp/date [:presto-common :minute]          [_ _ expr] (hsql/call :date_trunc (hx/literal :minute) expr))
+(defmethod sql.qp/date [:presto-common :minute]          [_ _ expr] (date-trunc :minute expr)
 (defmethod sql.qp/date [:presto-common :minute-of-hour]  [_ _ expr] (hsql/call :minute expr))
-(defmethod sql.qp/date [:presto-common :hour]            [_ _ expr] (hsql/call :date_trunc (hx/literal :hour) expr))
+(defmethod sql.qp/date [:presto-common :hour]            [_ _ expr] (date-trunc :hour expr)
 (defmethod sql.qp/date [:presto-common :hour-of-day]     [_ _ expr] (hsql/call :hour expr))
-(defmethod sql.qp/date [:presto-common :day]             [_ _ expr] (hsql/call :date_trunc (hx/literal :day) expr))
+(defmethod sql.qp/date [:presto-common :day]             [_ _ expr] (date-trunc :day expr)
 (defmethod sql.qp/date [:presto-common :day-of-month]    [_ _ expr] (hsql/call :day expr))
 (defmethod sql.qp/date [:presto-common :day-of-year]     [_ _ expr] (hsql/call :day_of_year expr))
 
@@ -194,18 +194,15 @@
   [driver _ expr]
   (sql.qp/adjust-start-of-week driver (partial hsql/call :date_trunc (hx/literal :week)) expr))
 
-(defmethod sql.qp/date [:presto-common :month]           [_ _ expr] (hsql/call :date_trunc (hx/literal :month) expr))
+(defmethod sql.qp/date [:presto-common :month]           [_ _ expr] (date-trunc :month expr)
 (defmethod sql.qp/date [:presto-common :month-of-year]   [_ _ expr] (hsql/call :month expr))
-(defmethod sql.qp/date [:presto-common :quarter]         [_ _ expr] (hsql/call :date_trunc (hx/literal :quarter) expr))
+(defmethod sql.qp/date [:presto-common :quarter]         [_ _ expr] (date-trunc :quarter expr)
 (defmethod sql.qp/date [:presto-common :quarter-of-year] [_ _ expr] (hsql/call :quarter expr))
-(defmethod sql.qp/date [:presto-common :year]            [_ _ expr] (hsql/call :date_trunc (hx/literal :year) expr))
+(defmethod sql.qp/date [:presto-common :year]            [_ _ expr] (date-trunc :year expr)
 
 (defmethod sql.qp/unix-timestamp->honeysql [:presto-common :seconds]
   [_ _ expr]
   (hsql/call :from_unixtime expr))
-
-(defn- date-diff [unit a b] (hsql/call :date_diff (hx/literal unit) a b))
-(defn- date-trunc [unit x] (hsql/call :date_trunc (hx/literal unit) x))
 
 (defmethod sql.qp/->honeysql [:presto-common :datetime-diff]
   [driver [_ x y unit]]
