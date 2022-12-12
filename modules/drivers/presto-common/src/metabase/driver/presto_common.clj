@@ -14,6 +14,7 @@
             [metabase.driver.sql.util :as sql.u]
             [metabase.driver.sql.util.unprepare :as unprepare]
             [metabase.query-processor.error-type :as qp.error-type]
+            [metabase.query-processor.timezone :as qp.timezone]
             [metabase.util :as u]
             [metabase.util.date-2 :as u.date]
             [metabase.util.honeysql-extensions :as hx]
@@ -225,7 +226,9 @@
                        :type  qp.error-type/invalid-query})))
     (case unit
       (:year :quarter :month :week :day)
-      (date-diff unit (date-trunc :day x) (date-trunc :day y))
+      (let [x-date (hsql/call :date (hx/->AtTimeZone x (qp.timezone/results-timezone-id)))
+            y-date (hsql/call :date (hx/->AtTimeZone y (qp.timezone/results-timezone-id)))]
+        (date-diff unit x-date y-date))
       (:hour :minute :second)
       (date-diff unit x y))))
 
