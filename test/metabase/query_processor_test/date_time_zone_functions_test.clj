@@ -6,7 +6,6 @@
             [metabase.models :refer [Card]]
             [metabase.query-processor.timezone :as qp.timezone]
             [metabase.test :as mt]
-            [metabase.test.data.interface :as tx]
             [metabase.util.date-2 :as u.date]))
 
 ;;; +----------------------------------------------------------------------------------------------------------------+
