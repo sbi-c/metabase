@@ -192,7 +192,7 @@
 
 (defmethod sql.qp/date [:presto-common :week]
   [driver _ expr]
-  (sql.qp/adjust-start-of-week driver (partial hsql/call :date_trunc (hx/literal :week)) expr))
+  (sql.qp/adjust-start-of-week driver (partial date-trunc :week) expr))
 
 (defmethod sql.qp/date [:presto-common :month]           [_ _ expr] (date-trunc :month expr)
 (defmethod sql.qp/date [:presto-common :month-of-year]   [_ _ expr] (hsql/call :month expr))
