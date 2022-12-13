@@ -322,7 +322,13 @@
 (defmethod sql.qp/->honeysql [:oracle :datetime-diff]
   [driver [_ x y unit]]
   (let [x (sql.qp/->honeysql driver x)
-        y (sql.qp/->honeysql driver y)]
+        y (sql.qp/->honeysql driver y)
+        x (cond-> x
+            (hx/is-of-type? x #"(?i)timestamp(\(\d\))? with time zone")
+            (hx/->AtTimeZone (qp.timezone/results-timezone-id)))
+        y (cond-> y
+            (hx/is-of-type? y #"(?i)timestamp(\(\d\))? with time zone")
+            (hx/->AtTimeZone (qp.timezone/results-timezone-id)))]
     (case unit
       :year
       (hx// (hsql/call :MONTHS_BETWEEN (trunc :dd y) (trunc :dd x)) 12)
