@@ -36,6 +36,8 @@
 
 (driver/register! :oracle, :parent #{:sql-jdbc ::sql.qp.empty-string-is-null/empty-string-is-null})
 
+(defmethod driver/database-supports? [:oracle :datetime-diff] [_driver _feat _db] true)
+
 (defmethod driver/database-supports? [:oracle :convert-timezone]
   [_driver _feat _db]
   true)
@@ -316,6 +318,30 @@
 (defmethod sql.qp/unix-timestamp->honeysql [:oracle :microseconds]
   [driver _ field-or-value]
   (sql.qp/unix-timestamp->honeysql driver :seconds (hx// field-or-value (hsql/raw 1000000))))
+
+(defmethod sql.qp/->honeysql [:oracle :datetime-diff]
+  [driver [_ x y unit]]
+  (let [x (sql.qp/->honeysql driver x)
+        y (sql.qp/->honeysql driver y)]
+    (case unit
+      :year
+      (hx// (hsql/call :MONTHS_BETWEEN (trunc :dd y) (trunc :dd x)) 12)
+
+      :quarter
+      (hx// (hsql/call :MONTHS_BETWEEN (trunc :dd y) (trunc :dd x)) 3)
+
+      :month
+      (hsql/call :MONTHS_BETWEEN (trunc :dd y) (trunc :dd x))
+
+      :week
+      (hx// (hx/- (trunc :dd y) (trunc :dd x)) 7)
+
+      :day
+      (hx/- (trunc :dd y) (trunc :dd x))
+
+      (:hour :minute :second)
+      (-> (hx/- (hx/cast :date y) (hx/cast :date x))
+          (hx/* (case unit :hour 24 :minute 1440 :second 86400))))))
 
 ;; Oracle doesn't support `LIMIT n` syntax. Instead we have to use `WHERE ROWNUM <= n` (`NEXT n ROWS ONLY` isn't
 ;; supported on Oracle versions older than 12). This has to wrap the actual query, e.g.
