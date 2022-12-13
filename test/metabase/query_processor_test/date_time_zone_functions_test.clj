@@ -424,7 +424,8 @@
                    {:expressions {"1" [:datetime-diff [:now] [:now] :month]}
                     :fields [[:expression "1"]]
                     :limit  1})
-                 mt/rows ffirst)))))
+                 (mt/formatted-rows [int])
+                 ffirst)))))
   (mt/test-drivers (mt/normal-drivers-with-feature :now :date-arithmetics :datetime-diff)
     (testing "should work in combination with datetime-diff and date-arithmetics"
       (is (= [1 1]
@@ -435,7 +436,8 @@
                     :fields [[:expression "1"]
                              [:expression "3"]]
                     :limit  1})
-                 mt/rows first))))))
+                 (mt/formatted-rows [int int])
+                 first))))))
 
 (defn- close-minute?
   "Tests whether two minute integers are within 1 minute of each other on the clock.
