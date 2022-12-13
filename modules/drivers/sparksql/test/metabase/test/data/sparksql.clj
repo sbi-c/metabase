@@ -24,6 +24,8 @@
 
 (defmethod tx/supports-time-type? :sparksql [_driver] false)
 
+(defmethod tx/supports-timestamptz-type? :hive_like [_driver] false)
+
 (doseq [[base-type database-type] {:type/BigInteger "BIGINT"
                                    :type/Boolean    "BOOLEAN"
                                    :type/Date       "DATE"
