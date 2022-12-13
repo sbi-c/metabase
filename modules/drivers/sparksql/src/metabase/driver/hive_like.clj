@@ -12,10 +12,8 @@
             [metabase.driver.sql.query-processor :as sql.qp]
             [metabase.driver.sql.util :as sql.u]
             [metabase.driver.sql.util.unprepare :as unprepare]
-            [metabase.query-processor.error-type :as qp.error-type]
             [metabase.util.date-2 :as u.date]
-            [metabase.util.honeysql-extensions :as hx]
-            [metabase.util.i18n :refer [tru]])
+            [metabase.util.honeysql-extensions :as hx])
   (:import [java.sql ResultSet Types]
            [java.time LocalDate OffsetDateTime ZonedDateTime]))
 
@@ -173,7 +171,9 @@
               (hx/cast
                :integer
                (hx/floor (hx// (hx/- (hsql/call :months_between b a)
-                                     (hx/cast :integer (hsql/call :> (hsql/call :extract :day a) (hsql/call :extract :day b))))
+                                     (hx/cast :integer (hsql/call :>
+                                                                  (hsql/call :dayofmonth a)
+                                                                  (hsql/call :dayofmonth b))))
                                12))))]
         (hsql/call :case
                    (hsql/call :<= (hx/->timestamp x) (hx/->timestamp y))
@@ -187,7 +187,9 @@
               (hx/cast
                :integer
                (hx/floor (hx// (hx/- (hsql/call :months_between b a)
-                                     (hx/cast :integer (hsql/call :> (hsql/call :extract :day a) (hsql/call :extract :day b))))
+                                     (hx/cast :integer (hsql/call :>
+                                                                  (hsql/call :dayofmonth a)
+                                                                  (hsql/call :dayofmonth b))))
                                3))))]
         (hsql/call :case
                    (hsql/call :<= (hx/->timestamp x) (hx/->timestamp y))
@@ -196,12 +198,12 @@
                    (hx/* -1 (positive-diff y x))))
 
       :month
-      (let [positive-diff (fn [a b]
-                            (hx/-
-                             (hsql/call :months_between b a)
-                             (hx/cast
-                              :integer
-                              (hsql/call :> (hsql/call :extract :day a) (hsql/call :extract :day b)))))]
+      (let [positive-diff
+            (fn [a b]
+              (hx/- (hsql/call :months_between b a)
+                    (hx/cast :integer (hsql/call :>
+                                                 (hsql/call :dayofmonth a)
+                                                 (hsql/call :dayofmonth b)))))]
         (hsql/call :case
                    (hsql/call :<= (hx/->timestamp x) (hx/->timestamp y))
                    (positive-diff x y)
@@ -210,10 +212,7 @@
 
       :week
       (let [positive-diff (fn [a b]
-                            (hx/cast
-                             :integer
-                             (hx/floor
-                              (hx// (hsql/call :datediff b a) 7))))]
+                            (hx/cast :integer (hx/floor (hx// (hsql/call :datediff b a) 7))))]
         (hsql/call :case
                    (hsql/call :<= (hx/->timestamp x) (hx/->timestamp y))
                    (positive-diff x y)
