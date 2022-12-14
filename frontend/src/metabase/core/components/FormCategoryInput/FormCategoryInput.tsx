@@ -18,6 +18,7 @@ export interface FormCategoryInputProps {
   title?: string;
   description?: ReactNode;
   nullable?: boolean;
+  optional?: boolean;
   className?: string;
   style?: React.CSSProperties;
   fieldInstance: Field;
@@ -31,6 +32,7 @@ const FormCategoryInput = forwardRef(function FormInput(
     title,
     description,
     nullable,
+    optional,
     fieldInstance,
   }: FormCategoryInputProps,
   ref: Ref<HTMLDivElement>,
@@ -54,6 +56,7 @@ const FormCategoryInput = forwardRef(function FormInput(
       description={description}
       htmlFor={id}
       error={touched ? error : undefined}
+      optional={optional}
     >
       <CategoryFieldPicker
         value={value ?? ""}
