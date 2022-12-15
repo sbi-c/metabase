@@ -7,7 +7,6 @@ import {
   getNotProvidedActionParameters,
 } from "metabase/modes/components/drill/ActionClickDrill/utils";
 import { executeRowAction } from "metabase/dashboard/actions";
-import { setNumericValues } from "metabase/actions/containers/ActionParametersInputForm/utils";
 
 import type {
   ActionDashboardCard,
@@ -19,7 +18,6 @@ import type { VisualizationProps } from "metabase-types/types/Visualization";
 import type { Dispatch } from "metabase-types/store";
 import type { ParameterValueOrArray } from "metabase-types/types/Parameter";
 
-import { generateFieldSettingsFromParameters } from "../ActionCreator/FormCreator";
 import LinkButton from "./LinkButton";
 import ActionVizForm from "./ActionVizForm";
 import { ActionParameterOptions } from "./ActionOptions";
@@ -77,15 +75,10 @@ function ActionComponent({
         ...parameterMap,
       };
 
-      const paramsForExecution = setNumericValues(
-        params,
-        generateFieldSettingsFromParameters(dashcard?.action?.parameters ?? []),
-      );
-
       return executeRowAction({
         page,
         dashcard,
-        parameters: paramsForExecution,
+        parameters: params,
         dispatch,
         shouldToast: shouldDisplayButton,
       });
