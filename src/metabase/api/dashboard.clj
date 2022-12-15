@@ -28,6 +28,7 @@
             [metabase.models.revision :as revision]
             [metabase.models.revision.last-edit :as last-edit]
             [metabase.models.table :refer [Table]]
+            [metabase.models.values-card :as values-card]
             [metabase.query-processor.dashboard :as qp.dashboard]
             [metabase.query-processor.error-type :as qp.error-type]
             [metabase.query-processor.middleware.constraints :as qp.constraints]
@@ -707,45 +708,67 @@
     param-key                   :- su/NonBlankString
     constraint-param-key->value :- su/Map
     query                       :- (s/maybe su/NonBlankString)]
-   (let [dashboard (hydrate dashboard :resolved-params)]
-     (when-not (get (:resolved-params dashboard) param-key)
+   (let [constraints (chain-filter-constraints dashboard constraint-param-key->value)
+         field-ids   (param-key->field-ids dashboard param-key)]
+     (when (empty? field-ids)
+       (throw (ex-info (tru "Parameter {0} does not have any Fields associated with it" (pr-str param-key))
+                       {:param       (get (:resolved-params dashboard) param-key)
+                        :status-code 400})))
+     ;; TODO - we should combine these all into a single UNION ALL query against the data warehouse instead of doing a
+     ;; separate query for each Field (for parameters that are mapped to more than one Field)
+     (try
+       (let [results (map (if (seq query)
+                            #(chain-filter/chain-filter-search % constraints query :limit result-limit)
+                            #(chain-filter/chain-filter % constraints :limit result-limit))
+                          field-ids)
+             values (distinct (mapcat :values results))
+             has_more_values (boolean (some true? (map :has_more_values results)))]
+         ;; results can come back as [v ...] *or* as [[orig remapped] ...]. Sort by remapped value if that's the case
+         {:values          (if (sequential? (first values))
+                             (sort-by second values)
+                             (sort values))
+          :has_more_values has_more_values})
+       (catch clojure.lang.ExceptionInfo e
+         (if (= (:type (u/all-ex-data e)) qp.error-type/missing-required-permissions)
+           (api/throw-403 e)
+           (throw e)))))))
+
+(defn- static-parameter-values
+  [{parameters :parameters} param-key query]
+  {:values
+   (some->> parameters
+            (group-by :id)
+            (#(get %2 %1) param-key)
+            (first)
+            (:source_options)
+            (:values)
+            (values-card/query-matches query))})
+
+(defn- param-values
+  ([dashboard param-key query-params]
+   (param-values dashboard param-key query-params nil))
+  ([dashboard param-key query-params query]
+   (let [dashboard (hydrate dashboard :resolved-params)
+         param     (get (:resolved-params dashboard) param-key)]
+     (when-not param
        (throw (ex-info (tru "Dashboard does not have a parameter with the ID {0}" (pr-str param-key))
                        {:resolved-params (keys (:resolved-params dashboard))
                         :status-code     400})))
-     (let [constraints (chain-filter-constraints dashboard constraint-param-key->value)
-           field-ids   (param-key->field-ids dashboard param-key)]
-      (when (empty? field-ids)
-        (throw (ex-info (tru "Parameter {0} does not have any Fields associated with it" (pr-str param-key))
-                        {:param       (get (:resolved-params dashboard) param-key)
-                         :status-code 400})))
-       ;; TODO - we should combine these all into a single UNION ALL query against the data warehouse instead of doing a
-       ;; separate query for each Field (for parameters that are mapped to more than one Field)
-      (try
-        (let [results (map (if (seq query)
-                               #(chain-filter/chain-filter-search % constraints query :limit result-limit)
-                               #(chain-filter/chain-filter % constraints :limit result-limit))
-                           field-ids)
-              values (distinct (mapcat :values results))
-              has_more_values (boolean (some true? (map :has_more_values results)))]
-          ;; results can come back as [v ...] *or* as [[orig remapped] ...]. Sort by remapped value if that's the case
-          {:values          (if (sequential? (first values))
-                              (sort-by second values)
-                              (sort values))
-           :has_more_values has_more_values})
-        (catch clojure.lang.ExceptionInfo e
-          (if (= (:type (u/all-ex-data e)) qp.error-type/missing-required-permissions)
-            (api/throw-403 e)
-            (throw e))))))))
+     (case (:source_type param)
+       "static-list" (static-parameter-values dashboard param-key query)
+       "card"        (values-card/values-for-dashboard dashboard param-key query)
+       ;; should be "field", but catch all cases just in case
+       (chain-filter dashboard param-key query-params query)))))
 
 (api/defendpoint GET "/:id/params/:param-key/values"
-  "Fetch possible values of the parameter whose ID is `:param-key`. Optionally restrict these values by passing query
-  parameters like `other-parameter=value` e.g.
+  "Fetch possible values of the parameter whose ID is `:param-key`. If the values come directly from a query, optionally
+  restrict these values by passing query parameters like `other-parameter=value` e.g.
 
     ;; fetch values for Dashboard 1 parameter 'abc' that are possible when parameter 'def' is set to 100
     GET /api/dashboard/1/params/abc/values?def=100"
   [id param-key :as {:keys [query-params]}]
   (let [dashboard (api/read-check Dashboard id)]
-    (chain-filter dashboard param-key query-params)))
+    (param-values dashboard param-key query-params)))
 
 (api/defendpoint GET "/:id/params/:param-key/search/:query"
   "Fetch possible values of the parameter whose ID is `:param-key` that contain `:query`. Optionally restrict
@@ -758,7 +781,7 @@
   Currently limited to first 1000 results."
   [id param-key query :as {:keys [query-params]}]
   (let [dashboard (api/read-check Dashboard id)]
-    (chain-filter dashboard param-key query-params query)))
+    (param-values dashboard param-key query-params query)))
 
 (api/defendpoint GET "/params/valid-filter-fields"
   "Utility endpoint for powering Dashboard UI. Given some set of `filtered` Field IDs (presumably Fields used in
