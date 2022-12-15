@@ -38,9 +38,9 @@ export const LayoutIllustration = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  filter: hue-rotate(${hueRotate("brand")}deg);
+  /*filter: hue-rotate(${hueRotate("brand")}deg);
   background-image: url("app/img/bridge.svg");
   background-size: max(2592px, 100%) auto;
   background-repeat: no-repeat;
-  background-position: right bottom;
+  background-position: right bottom;*/
 `;
