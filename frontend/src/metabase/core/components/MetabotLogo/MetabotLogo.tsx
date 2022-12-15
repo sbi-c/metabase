@@ -15,7 +15,7 @@ const MetabotLogo = forwardRef(function MetabotLogo(
       {...props}
       ref={ref}
       alt={t`Metabot`}
-      src="app/assets/img/metabot.svg"
+      src="app/assets/img/preiseule.png"
     />
   );
 });
