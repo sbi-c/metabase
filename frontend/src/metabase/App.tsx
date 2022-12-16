@@ -129,7 +129,7 @@ function App({
           </AppContentContainer>
           <SourceCodeLink>
             powered by Metabase (
-            <a href="https://www.preiseule.com/">Quellcode</a>)
+            <a href="https://github.com/sbi-c/metabase">Quellcode</a>)
           </SourceCodeLink>
         </AppContainer>
       </ScrollToTop>
