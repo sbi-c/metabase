@@ -4,6 +4,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [medley.core :as m]
             [metabase.automagic-dashboards.populate :as populate]
             [metabase.events :as events]
             [metabase.models.card :as card :refer [Card]]
@@ -19,6 +20,7 @@
             [metabase.models.serialization.base :as serdes.base]
             [metabase.models.serialization.hash :as serdes.hash]
             [metabase.models.serialization.util :as serdes.util]
+            [metabase.models.values-card :as values-card :refer [ValuesCard]]
             [metabase.moderation :as moderation]
             [metabase.public-settings :as public-settings]
             [metabase.query-processor.async :as qp.async]
@@ -70,7 +72,9 @@
 ;;; ----------------------------------------------- Entity & Lifecycle -----------------------------------------------
 
 (defn- pre-delete [dashboard]
-  (db/delete! 'Revision :model "Dashboard" :model_id (u/the-id dashboard)))
+  (let [dashboard-id (u/the-id dashboard)]
+    (values-card/delete-for-dashboard! dashboard-id)
+    (db/delete! 'Revision :model "Dashboard" :model_id dashboard-id)))
 
 (defn- pre-insert [dashboard]
   (let [defaults  {:parameters []}
@@ -79,9 +83,15 @@
       (params/assert-valid-parameters dashboard)
       (collection/check-collection-namespace Dashboard (:collection_id dashboard)))))
 
+(defn- post-insert
+  [dashboard]
+  (u/prog1 dashboard
+    (values-card/upsert-or-delete-for-dashboard! dashboard)))
+
 (defn- pre-update [dashboard]
   (u/prog1 dashboard
     (params/assert-valid-parameters dashboard)
+    (values-card/upsert-or-delete-for-dashboard! dashboard)
     (collection/check-collection-namespace Dashboard (:collection_id dashboard))))
 
 (defn- update-dashboard-subscription-pulses!
@@ -131,6 +141,22 @@
   [dashboard]
   (update-dashboard-subscription-pulses! dashboard))
 
+(defn- card-ids-by-param-id
+  "Return a map (keyed by parameter ID) of ValuesCards associated with `dashboard`"
+  [dashboard-id]
+  (->> (db/select ValuesCard :parameterized_object_id dashboard-id :parameterized_object_type "dashboard")
+       (group-by :parameter_id)
+       (m/map-vals (comp :card_id first))))
+
+(defn- populate-values-card
+  [{dashboard-id :id parameters :parameters :as dashboard}]
+  (assoc dashboard :parameters
+         (let [param-id->card-id (card-ids-by-param-id dashboard-id)]
+           (for [{:keys [id source_type card_id] :as param} parameters]
+             (if (= source_type "card")
+               (assoc param :card_id (get param-id->card-id id card_id))
+               param)))))
+
 (u/strict-extend #_{:clj-kondo/ignore [:metabase/disallow-class-or-type-on-model]} (class Dashboard)
   models/IModel
   (merge models/IModelDefaults
@@ -139,9 +165,10 @@
           :types       (constantly {:parameters :parameters-list, :embedding_params :json})
           :pre-delete  pre-delete
           :pre-insert  pre-insert
+          :post-insert post-insert
           :pre-update  pre-update
           :post-update post-update
-          :post-select public-settings/remove-public-uuid-if-public-sharing-is-disabled}))
+          :post-select (comp populate-values-card public-settings/remove-public-uuid-if-public-sharing-is-disabled)}))
 
 (defmethod serdes.hash/identity-hash-fields Dashboard
   [_dashboard]
