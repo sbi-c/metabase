@@ -7,18 +7,18 @@ export const ACCENT_COUNT = 8;
 // NOTE: KEEP SYNCRONIZED WITH COLORS.CSS
 /* eslint-disable no-color-literals */
 export const colors = {
-  brand: "#A09EE3",
-  summarize: "#88BF4D",
-  filter: "#7172AD",
-  accent0: "#509EE3",
-  accent1: "#88BF4D",
+  brand: "#5A327A", // preiseule-vivid-purple
+  summarize: "#9FD18F", // preiseule-green
+  filter: "#5BA5BD", // preiseule-vivid-turqoise
+  accent0: "#5A327A", // preiseule-vivid-purple
+  accent1: "#9FD18F", // preiseule-green
   accent2: "#A989C5",
   accent3: "#EF8C8C",
   accent4: "#F9D45C",
   accent5: "#F2A86F",
   accent6: "#98D9D9",
-  accent7: "#7172AD",
-  "admin-navbar": "#7172AD",
+  accent7: "#5BA5BD", // preiseule-vivid-turqoise
+  "admin-navbar": "#5BA5BD", // preiseule-vivid-turqoise
   white: "#FFFFFF",
   black: "#2E353B",
   success: "#84BB4C",
@@ -32,7 +32,7 @@ export const colors = {
   "bg-black": "#2E353B",
   "bg-dark": "#93A1AB",
   "bg-medium": "#EDF2F5",
-  "bg-light": "#F9FBFC",
+  "bg-light": "#F3F1ED",
   "bg-white": "#FFFFFF",
   "bg-yellow": "#FFFCF2",
   "bg-night": "#42484E",

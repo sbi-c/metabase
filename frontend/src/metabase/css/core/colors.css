@@ -2,7 +2,15 @@
  * NOTE: KEEP SYNCRONIZED WITH COLORS.JS
  */
 :root {
-  --color-brand: #a09ee3;
+  --preiseule-ivory: #f3f1ed;
+  --preiseule-vivid-turqoise: #5ba5bd;
+  --preiseule-vivid-purple: #5a327a;
+  --preiseule-dark-purple: #341d47;
+  --preiseule-green: #9fd18f;
+  --preiseule-yellow: #5a327a;
+  --preiseule-red: #341d47;
+
+  --color-brand: var(--preiseule-vivid-purple);
   --color-brand-light: #ddecfa;
   --color-admin-navbar: #7172ad;
   --color-white: #ffffff;
@@ -17,7 +25,7 @@
   --color-bg-black: #2e353b;
   --color-bg-dark: #93a1ab;
   --color-bg-medium: #edf2f5;
-  --color-bg-light: #f9fbfc;
+  --color-bg-light: #f3f1ed;
   --color-bg-white: #ffffff;
   --color-bg-yellow: #fffcf2;
   --color-focus: #cbe2f7;
