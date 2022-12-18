@@ -24,7 +24,7 @@ const Login = ({
 
   return (
     <AuthLayout>
-      <LoginTitle>{t`Sign in to Metabase`}</LoginTitle>
+      <LoginTitle>Bei der Preiseule anmelden</LoginTitle>
       {selection && selection.Panel && (
         <LoginPanel>
           <selection.Panel redirectUrl={redirectUrl} />
